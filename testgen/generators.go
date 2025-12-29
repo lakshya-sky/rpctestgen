@@ -2211,7 +2211,12 @@ var DebugGetRawReceipts = MethodTests{
 			Name:  "get-block-n",
 			About: "gets receipts non-zero block",
 			Run: func(ctx context.Context, t *T) error {
-				return t.rpc.CallContext(ctx, nil, "debug_getRawReceipts", "0x3")
+				// Use block 0x4 instead of 0x3 because block 3 contains the "tx-largereceipt"
+				// transaction which generates a ~21MB test file. Hive's rpc-compat simulator
+				// has a 1MB file size limit for test fixtures (see testload.go), so using
+				// block 3 would cause test loading failures. Block 4 produces a ~1.8KB file
+				// while still testing the same RPC functionality with normal-sized receipts.
+				return t.rpc.CallContext(ctx, nil, "debug_getRawReceipts", "0x4")
 			},
 		},
 		{
