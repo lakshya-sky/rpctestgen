@@ -2,23 +2,24 @@
   "config": {
     "chainId": 3503995874084926,
     "homesteadBlock": 0,
-    "eip150Block": 3,
-    "eip155Block": 6,
-    "eip158Block": 6,
-    "byzantiumBlock": 9,
-    "constantinopleBlock": 12,
-    "petersburgBlock": 15,
-    "istanbulBlock": 18,
-    "muirGlacierBlock": 21,
-    "berlinBlock": 24,
-    "londonBlock": 27,
-    "arrowGlacierBlock": 30,
-    "grayGlacierBlock": 33,
-    "mergeNetsplitBlock": 36,
-    "shanghaiTime": 390,
-    "cancunTime": 420,
-    "pragueTime": 450,
-    "terminalTotalDifficulty": 4732736,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "arrowGlacierBlock": 0,
+    "grayGlacierBlock": 0,
+    "mergeNetsplitBlock": 0,
+    "shanghaiTime": 0,
+    "cancunTime": 30,
+    "pragueTime": 60,
+    "osakaTime": 90,
+    "terminalTotalDifficulty": 131072,
     "depositContractAddress": "0x0000000000000000000000000000000000000000",
     "ethash": {},
     "blobSchedule": {
@@ -31,13 +32,18 @@
         "target": 6,
         "max": 9,
         "baseFeeUpdateFraction": 5007716
+      },
+      "osaka": {
+        "target": 6,
+        "max": 9,
+        "baseFeeUpdateFraction": 5007716
       }
     }
   },
   "nonce": "0x0",
   "timestamp": "0x0",
   "extraData": "0x68697665636861696e",
-  "gasLimit": "0x23f3e20",
+  "gasLimit": "0x5f5e100",
   "difficulty": "0x20000",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "coinbase": "0x0000000000000000000000000000000000000000",
@@ -119,6 +125,10 @@
       "balance": "0x1",
       "nonce": "0x1"
     },
+    "8dcd17433742f4c0ca53122ab541d0ba67fc27ff": {
+      "code": "0x6202e6306000a0",
+      "balance": "0x0"
+    },
     "c7b99a164efd027a93f147376cc7da7c67c6bbe0": {
       "balance": "0xc097ce7bc90715b34b9f1000000000"
     },
@@ -135,7 +145,7 @@
   "number": "0x0",
   "gasUsed": "0x0",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "baseFeePerGas": null,
+  "baseFeePerGas": "0x3b9aca00",
   "excessBlobGas": null,
   "blobGasUsed": null
 }

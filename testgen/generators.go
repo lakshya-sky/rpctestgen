@@ -446,7 +446,15 @@ var EthGetBlockByNumber = MethodTests{
 			Name:  "get-block-merge-fork",
 			About: "requests a block at the merge (Paris) fork",
 			Run: func(ctx context.Context, t *T) error {
-				hdr, err := t.eth.HeaderByNumber(ctx, t.chain.config.MergeNetsplitBlock)
+				// When MergeNetsplitBlock is 0 (merge at genesis), the genesis block itself
+				// still has PoW difficulty > 0 because it's the terminal PoW block that
+				// triggers the merge via TTD. The first actual PoS block is block 1.
+				// We check block 1 in this case to verify PoS behavior (difficulty = 0).
+				blockNum := t.chain.config.MergeNetsplitBlock
+				if blockNum.Sign() == 0 {
+					blockNum = big.NewInt(1)
+				}
+				hdr, err := t.eth.HeaderByNumber(ctx, blockNum)
 				if err != nil {
 					return err
 				}
@@ -909,7 +917,14 @@ The server should return the accessed slots regardless of failure, and should re
 in the "error" field.`,
 			SpecOnly: true,
 			Run: func(ctx context.Context, t *T) error {
+				// A funded sender account is required because eth_createAccessList validates
+				// that the sender has sufficient balance to cover gas * gasPrice. Without a
+				// "from" field, geth defaults to the zero address (0x0), which has minimal
+				// balance in PoS chains (no block rewards). This would cause the RPC call to
+				// fail with "insufficient funds" before even attempting to create the access list.
+				sender, _ := t.chain.GetSender(0)
 				msg := map[string]any{
+					"from":  sender,
 					"to":    t.chain.txinfo.CallRevertContract.Addr,
 					"gas":   hexutil.Uint64(100000),
 					"input": "0x01", // triggers error(string) revert
@@ -3703,7 +3718,13 @@ var EthSimulateV1 = MethodTests{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
 							Value: *newRPCBalance(1000),
-							Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000100"),
+							// The EthForwarder contract calls execute(address payable forwardTo) which uses
+							// send() to forward ETH. The target address must be outside the precompile range.
+							// Address 0x100 (256) is a precompile in Osaka fork (BLS12-381 curve operations),
+							// and send() only provides 2300 gas stipend which is insufficient for precompile
+							// execution, causing the transaction to revert. Using 0x400 (1024) avoids this
+							// issue as it's well beyond the precompile address space.
+							Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000400"),
 						}},
 					}},
 					TraceTransfers: true,
