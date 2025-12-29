@@ -89,6 +89,9 @@ var AllMethods = []MethodTests{
 	DebugGetRawBlock,
 	DebugGetRawReceipts,
 	DebugGetRawTransaction,
+	DebugTraceCall,
+	DebugTraceBlockByNumber,
+	DebugTraceTransaction,
 	EthBlobBaseFee,
 	NetVersion,
 
@@ -2273,6 +2276,155 @@ var DebugGetRawTransaction = MethodTests{
 					return err
 				}
 				return nil
+			},
+		},
+	},
+}
+
+type debugTraceCallParams struct {
+	From       common.Address   `json:"from,omitempty"`
+	To         *common.Address  `json:"to,omitempty"`
+	Gas        hexutil.Uint64   `json:"gas,omitempty"`
+	GasPrice   hexutil.Big      `json:"gasPrice,omitempty"`
+	Value      hexutil.Big      `json:"value,omitempty"`
+	Data       hexutil.Bytes    `json:"data,omitempty"`
+	AccessList types.AccessList `json:"accessList,omitempty"`
+}
+
+var DebugTraceCall = MethodTests{
+	"debug_traceCall",
+	[]Test{
+		{
+			Name:  "traceCall-callTracer-gas-check",
+			About: "trace tx-emit-eip2930 with callTracer",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				block := t.chain.GetBlock(24)
+				tx := block.Transactions()[0]
+				to := tx.To()
+				from, _ := types.Sender(types.LatestSignerForChainID(tx.ChainId()), tx)
+
+				return t.rpc.CallContext(ctx, &result, "debug_traceCall", debugTraceCallParams{
+					From:       from,
+					To:         to,
+					Gas:        hexutil.Uint64(tx.Gas()),
+					GasPrice:   hexutil.Big(*tx.GasPrice()),
+					Value:      hexutil.Big(*tx.Value()),
+					Data:       tx.Data(),
+					AccessList: tx.AccessList(),
+				}, "0x18", map[string]interface{}{
+					"tracer":       "callTracer",
+					"tracerConfig": map[string]interface{}{},
+				})
+			},
+		},
+		{
+			Name:  "traceCall-structLogs-gas",
+			About: "generic debug_traceCall for GAS (0x5a)",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				return t.rpc.CallContext(ctx, &result, "debug_traceCall", debugTraceCallParams{
+					From: common.Address{0x01},
+					Data: hexutil.MustDecode("0x5a"),
+					Gas:  hexutil.Uint64(0x35a4e900),
+				}, "0x2d")
+			},
+		},
+	},
+}
+
+var DebugTraceBlockByNumber = MethodTests{
+	"debug_traceBlockByNumber",
+	[]Test{
+		{
+			Name:  "debug-trace-callTracer",
+			About: "check client support for callTracer (the most popular native tracer)",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				return t.rpc.CallContext(ctx, &result, "debug_traceBlockByNumber", "0x2", map[string]interface{}{
+					"tracer": "callTracer",
+					"tracerConfig": map[string]interface{}{
+						"onlyTopCall": false,
+						"withLog":     true,
+					},
+				})
+			},
+		},
+		{
+			Name:  "debug-trace-genesis-block",
+			About: "check error code and message for debug_traceBlockByNumber against genesis block",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				err := t.rpc.CallContext(ctx, &result, "debug_traceBlockByNumber", "0x0")
+				if err != nil {
+					if err.Error() == "genesis is not traceable" {
+						return nil
+					}
+					return err
+				}
+				return nil
+			},
+		},
+	},
+}
+
+var DebugTraceTransaction = MethodTests{
+	"debug_traceTransaction",
+	[]Test{
+		{
+			Name:  "traceTransaction-callTracer",
+			About: "trace a transaction using callTracer",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				block := t.chain.GetBlock(24)
+				tx := block.Transactions()[0]
+				return t.rpc.CallContext(ctx, &result, "debug_traceTransaction", tx.Hash(), map[string]interface{}{
+					"tracer": "callTracer",
+					"tracerConfig": map[string]interface{}{
+						"onlyTopCall": false,
+						"withLog":     true,
+					},
+				})
+			},
+		},
+		{
+			Name:  "traceTransaction-structLogs",
+			About: "trace a transaction using default struct logger",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				block := t.chain.GetBlock(24)
+				tx := block.Transactions()[0]
+				return t.rpc.CallContext(ctx, &result, "debug_traceTransaction", tx.Hash())
+			},
+		},
+		{
+			Name:  "traceTransaction-prestateTracer",
+			About: "trace a transaction using prestateTracer without diff mode",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				block := t.chain.GetBlock(24)
+				tx := block.Transactions()[0]
+				return t.rpc.CallContext(ctx, &result, "debug_traceTransaction", tx.Hash(), map[string]interface{}{
+					"tracer": "prestateTracer",
+					"tracerConfig": map[string]interface{}{
+						"diffMode": false,
+					},
+				})
+			},
+		},
+		{
+			Name:  "traceTransaction-prestateTracer-diffMode",
+			About: "trace a transaction using prestateTracer with diff mode enabled",
+			Run: func(ctx context.Context, t *T) error {
+				var result interface{}
+				block := t.chain.GetBlock(24)
+				tx := block.Transactions()[0]
+				return t.rpc.CallContext(ctx, &result, "debug_traceTransaction", tx.Hash(), map[string]interface{}{
+					"tracer": "prestateTracer",
+					"tracerConfig": map[string]interface{}{
+						"diffMode": true,
+					},
+				})
 			},
 		},
 	},
