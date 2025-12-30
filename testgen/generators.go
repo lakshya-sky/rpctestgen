@@ -1909,9 +1909,12 @@ var EthGetLogs = MethodTests{
 			Name:  "no-topics",
 			About: "queries for all logs across a range of blocks",
 			Run: func(ctx context.Context, t *T) error {
+				// Query blocks 4-6 instead of 1-3 to avoid block 3 which contains the
+				// "tx-largereceipt" transaction. That transaction generates ~21MB of log data,
+				// exceeding Hive's 1MB test file size limit (see testload.go in rpc-compat).
 				result, err := t.eth.FilterLogs(ctx, ethereum.FilterQuery{
-					FromBlock: big.NewInt(1),
-					ToBlock:   big.NewInt(3),
+					FromBlock: big.NewInt(4),
+					ToBlock:   big.NewInt(6),
 				})
 				if err != nil {
 					return err
@@ -2006,9 +2009,11 @@ var EthGetLogs = MethodTests{
 			Name:  "filter-with-blockHash",
 			About: "queries for all logs of a block, identified by blockHash",
 			Run: func(ctx context.Context, t *T) error {
-				// Find a block with logs.
+				// Find a block with logs, but skip block 3 which contains "tx-largereceipt".
+				// That transaction generates ~21MB of log data, exceeding Hive's 1MB test
+				// file size limit (see testload.go in rpc-compat).
 				i := slices.IndexFunc(t.chain.txinfo.LegacyEmit, func(tx TxInfo) bool {
-					return tx.Block > 2
+					return tx.Block > 3
 				})
 				if i == -1 {
 					return fmt.Errorf("no suitable tx found")
@@ -2029,9 +2034,11 @@ var EthGetLogs = MethodTests{
 			Name:  "filter-with-blockHash",
 			About: "queries for all logs of a block, identified by blockHash",
 			Run: func(ctx context.Context, t *T) error {
-				// Find a block with logs.
+				// Find a block with logs, but skip block 3 which contains "tx-largereceipt".
+				// That transaction generates ~21MB of log data, exceeding Hive's 1MB test
+				// file size limit (see testload.go in rpc-compat).
 				i := slices.IndexFunc(t.chain.txinfo.LegacyEmit, func(tx TxInfo) bool {
-					return tx.Block > 2
+					return tx.Block > 3
 				})
 				if i == -1 {
 					return fmt.Errorf("no suitable tx found")
